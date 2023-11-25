@@ -164,8 +164,7 @@ Eigen::VectorXd KDLController::idCntr(KDL::Frame &_desPos,
     y << dot_dot_x_d - Jdot*robot_->getJntVelocities() + Kd*dot_x_tilde + Kp*x_tilde;
 
     //restituiamo l'ingresso di controllo u = By + n
-       return M * (Jpinv*y )+ robot_->getGravity() + robot_->getCoriolis();
-
+       return M * (Jpinv*y+ (I-Jpinv*J)*(/*- 10*grad */- 1*robot_->getJntVelocities()))+ robot_->getGravity() + robot_->getCoriolis();
            //(I-Jpinv*J)*(/*- 10*grad */- 1*robot_->getJntVelocities())
 }
 

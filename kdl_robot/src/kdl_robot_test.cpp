@@ -111,8 +111,8 @@ int main(int argc, char **argv)
     ros::Publisher joint5_err = n.advertise<std_msgs::Float64>("/iiwa/joint5_err", 1);
     ros::Publisher joint6_err = n.advertise<std_msgs::Float64>("/iiwa/joint6_err", 1);    
     ros::Publisher joint7_err = n.advertise<std_msgs::Float64>("/iiwa/joint7_err", 1);
-     
-
+     //norm error
+    ros::Publisher norm_err = n.advertise<std_msgs::Float64>("/iiwa/norm_error", 1);
     // Services
     ros::ServiceClient robot_set_state_srv = n.serviceClient<gazebo_msgs::SetModelConfiguration>("/gazebo/set_model_configuration");
     ros::ServiceClient pauseGazebo = n.serviceClient<std_srvs::Empty>("/gazebo/pause_physics");
@@ -146,6 +146,7 @@ int main(int argc, char **argv)
     std_msgs::Float64 dqd1_msg, dqd2_msg, dqd3_msg, dqd4_msg, dqd5_msg, dqd6_msg, dqd7_msg;
     std_msgs::Float64 ddqd1_msg, ddqd2_msg, ddqd3_msg, ddqd4_msg, ddqd5_msg, ddqd6_msg, ddqd7_msg;
     std_msgs::Float64 err1_msg, err2_msg, err3_msg, err4_msg, err5_msg, err6_msg, err7_msg;
+    std_msgs::Float64 norm_msg;
     
     std_srvs::Empty pauseSrv;
 
@@ -195,16 +196,20 @@ int main(int argc, char **argv)
     double traj_duration = 3, acc_duration = 0.7, t = 0.0, init_time_slot = 1.0, radius=0.1;
 
     // LINEAR TRAJECTORY CONSTRUCTOR
-    // KDLPlanner planner(traj_duration, acc_duration, init_position, end_position); 
+     //KDLPlanner planner(traj_duration, acc_duration, init_position, end_position); 
 
     // CIRCULAR TRAJECTORY CONSTRUCTOR
-    KDLPlanner planner(traj_duration, init_position, radius);
+    //KDLPlanner planner(traj_duration, init_position, radius);
     
+    //GENERAL CONSTRUCTOR
+    KDLPlanner planner(traj_duration, acc_duration, init_position, end_position,radius);
     // Retrieve the first trajectory point
-    trajectory_point p = planner.compute_trapezoidal_circular(t);
+    std::string profile="trapezoidal";
+    std::string path="circular";
+    trajectory_point p = planner.compute_trajectory(t,profile,path);
 
     // Gains
-    double Kp = 50, Kd = sqrt(50);
+    double Kp = 120, Kd = 15;
 
     // Retrieve initial simulation time
     ros::Time begin = ros::Time::now();
@@ -231,11 +236,11 @@ int main(int argc, char **argv)
             des_cart_acc = KDL::Twist::Zero();
             if (t <= init_time_slot) // wait a second
             {
-                p = planner.compute_trapezoidal_circular(0.0);
+                p = planner.compute_trajectory(0.0,profile,path);
             }
             else if(t > init_time_slot && t <= traj_duration + init_time_slot)
             {
-                p = planner.compute_trapezoidal_circular(t-init_time_slot);
+                p = planner.compute_trajectory(t-init_time_slot,profile,path);
                 des_cart_vel = KDL::Twist(KDL::Vector(p.vel[0], p.vel[1], p.vel[2]),KDL::Vector::Zero());
                 des_cart_acc = KDL::Twist(KDL::Vector(p.acc[0], p.acc[1], p.acc[2]),KDL::Vector::Zero());
             }
@@ -273,14 +278,15 @@ int main(int argc, char **argv)
            // robot.getInverseKinematics(des_pose, des_cart_vel, des_cart_acc,qd,dqd,ddqd);
 
             // joint space inverse dynamics control
-            tau = controller_.idCntr(qd, dqd, ddqd, Kp, Kd);
-            Eigen::VectorXd errors =qd.data-robot.getJntValues();
-            // double Kp = 100;
-            // double Ko = 100;
+           tau = controller_.idCntr(qd, dqd, ddqd, Kp, Kd);
+            
+            // double Kp = 130;
+            // double Ko = 10;
+            // double Kdp = 25;
             // // Cartesian space inverse dynamics control
             // tau = controller_.idCntr(des_pose, des_cart_vel, des_cart_acc,
-            //                          Kp, Ko, 2*sqrt(Kp), 2*sqrt(Ko));
-            //     std::cout<<tau<<std::endl;
+            //                          Kp, Ko, Kdp, 2*sqrt(Ko));
+            Eigen::VectorXd errors =qd.data-robot.getJntValues();
             // Set torques
             tau1_msg.data = tau[0];
             tau2_msg.data = tau[1];
@@ -324,7 +330,8 @@ int main(int argc, char **argv)
             err5_msg.data=errors[4];;
             err6_msg.data=errors[5];;
             err7_msg.data=errors[6];;
-
+            //creating error norm msg
+            norm_msg.data=errors.norm();
             // Publish
             joint1_effort_pub.publish(tau1_msg);
             joint2_effort_pub.publish(tau2_msg);
@@ -368,6 +375,8 @@ int main(int argc, char **argv)
             joint5_err.publish(err5_msg);
             joint6_err.publish(err6_msg);
             joint7_err.publish(err7_msg);
+            //norm error
+            norm_err.publish(norm_msg);
                         
             ros::spinOnce();
             loop_rate.sleep();
