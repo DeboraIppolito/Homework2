@@ -77,8 +77,13 @@ KDL::Trajectory* KDLPlanner::getTrajectory()
 	return traject_;
 }
 
-void KDLPlanner::trapezoidal_vel(double time, double &s, double &dots,double &ddots)
-{
+
+
+//FUNZIONI IMPLEMENTATE DA NOI
+
+
+//funzione che calcola s, s_dot, s_ddot seguendo un profilo di velocità trapezoidale
+void KDLPlanner::trapezoidal_vel(double time, double &s, double &dots,double &ddots){
   
   double si=0;
   double sf=1;
@@ -103,11 +108,10 @@ void KDLPlanner::trapezoidal_vel(double time, double &s, double &dots,double &dd
     dots = ddot_traj_c*(trajDuration_-time);
     ddots = -ddot_traj_c;
   }
-
 }
 
-void KDLPlanner::cubic_polinomial(double time, double &s, double &dots,double &ddots)
-{
+//funzione che calcola s, s_dot, s_ddot con polinomio cubico
+void KDLPlanner::cubic_polinomial(double time, double &s, double &dots,double &ddots){
   
   double si=0;
   double sf=1;
@@ -125,36 +129,33 @@ void KDLPlanner::cubic_polinomial(double time, double &s, double &dots,double &d
 }
 
 
-trajectory_point KDLPlanner::path_primitive_linear( double &s, double &dots,double &ddots){ //sono input soltanto, ma evito la copia
+//funzione che calcola pos, vel e acc a partire da s, s_dot, s_ddot seguendo un tratto lineare
+trajectory_point KDLPlanner::path_primitive_linear( double &s, double &dots,double &ddots){
   trajectory_point traj;
   Eigen::Vector3d pi=trajInit_;
   Eigen::Vector3d pf=trajEnd_;
   Eigen::Vector3d dif=pf-pi;
-  /*double pnorm=dif.norm();
-  traj.pos=pi+s*dif/pnorm;
-  traj.vel=dots*dif/pnorm;
-  traj.acc=ddots*dif/pnorm;*/
+
   traj.pos=(1-s)*pi+s*pf;
   traj.vel=(-pi+pf)*dots;
   traj.acc=(-pi+pf)*ddots;
-  //std::cout<<"pos: "<<traj.pos[1]<<" "<<traj.pos[2]<<" "<<traj.pos[3] <<std::endl;
+  
   return traj;  
 }
 
-trajectory_point KDLPlanner::path_primitive_circular( double &s, double &dots,double &ddots){ //sono input soltanto, ma evito la copia
+
+//funzione che calcola pos, vel e acc a partire da s, s_dot, s_ddot seguendo un tratto circolare
+trajectory_point KDLPlanner::path_primitive_circular( double &s, double &dots,double &ddots){
   trajectory_point traj;
   Eigen::Vector3d pi = trajInit_;
   Eigen::Vector3d pf=trajEnd_;
   Eigen::Vector3d dif=pf-pi;
-
   
   // DEFINE  THE CENTER
-  
   Eigen::Vector3d p0;
   p0[0] = pi[0]; // centro x
   p0[1] = pi[1]+trajRadius_; // centro y
   p0[2] = pi[2]; // centro z
-  
 
   // POSIZIONE
   traj.pos[0] = p0[0]; // x
@@ -171,20 +172,17 @@ trajectory_point KDLPlanner::path_primitive_circular( double &s, double &dots,do
   traj.acc[1] = trajRadius_*(2*M_PI)*(dots*dots*2*M_PI*cos(2*M_PI*s)+ddots*sin(2*M_PI*s));
   traj.acc[2] = -trajRadius_*(2*M_PI)*(-dots*dots*2*M_PI*sin(2*M_PI*s)+ddots*cos(2*M_PI*s));
 
-
-
-  //std::cout<<"pos: "<<traj.pos[1]<<" "<<traj.pos[2]<<" "<<traj.pos[3] <<std::endl;
   return traj;  
 }
 
+
+//FUNZIONI CHE CALCOLANO TUTTE LE POSSIBILI COMBINAZIONI DI PATH/PROFILE
 trajectory_point KDLPlanner::compute_trapezoidal_linear( double t){
   double st;
   double dst;
   double ddst;
   trapezoidal_vel(t,st,dst,ddst);
 
-  // std::cout<<"time: "<<t<<" s: "<<st<<" s dot: " <<dst<<" s dot dot: "<<ddst<<std::endl;
-  //std::cout<<"time: "<<t<<" ";
   return path_primitive_linear(st,dst,ddst);
 }
 
@@ -194,8 +192,8 @@ trajectory_point KDLPlanner::compute_cubic_linear( double t){
   double ddst;
   cubic_polinomial(t,st,dst,ddst);
 
-    std::cout<<"time: "<<t<<" s: "<<st<<" s dot: " <<dst<<" s dot dot: "<<ddst<<std::endl;
-  //std::cout<<"time: "<<t<<" ";
+  std::cout<<"time: "<<t<<" s: "<<st<<" s dot: " <<dst<<" s dot dot: "<<ddst<<std::endl;
+
   return path_primitive_linear(st,dst,ddst);
 }
 
@@ -205,8 +203,8 @@ trajectory_point KDLPlanner::compute_cubic_circular( double t){
   double ddst;
   cubic_polinomial(t,st,dst,ddst);
 
-    std::cout<<"time: "<<t<<" s: "<<st<<" s dot: " <<dst<<" s dot dot: "<<ddst<<std::endl;
-  //std::cout<<"time: "<<t<<" ";
+  std::cout<<"time: "<<t<<" s: "<<st<<" s dot: " <<dst<<" s dot dot: "<<ddst<<std::endl;
+
   return path_primitive_circular(st,dst,ddst);
 }
 
@@ -217,11 +215,11 @@ trajectory_point KDLPlanner::compute_trapezoidal_circular(double time)
   double ddst;
   trapezoidal_vel(time,st,dst,ddst);
 
-    //std::cout<<"time: "<<time<<" s: "<<st<<" s dot: " <<dst<<" s dot dot: "<<ddst<<std::endl;
-  //std::cout<<"time: "<<t<<" ";
   return path_primitive_circular(st,dst,ddst);
 }
 
+
+// FUNZIONE GENERALE PER LA SCELTA DELLA COMBINAZIONE PATH/PROFILE
 trajectory_point KDLPlanner::compute_trajectory(double time,std::string profile, std::string path)
 {
   if(profile=="cubic"){

@@ -46,7 +46,8 @@ void jointStateCallback(const sensor_msgs::JointState & msg)
     }
 }
 
-// Main
+
+// MAIN
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -65,7 +66,8 @@ int main(int argc, char **argv)
     // Subscribers
     ros::Subscriber joint_state_sub = n.subscribe("/iiwa/joint_states", 1, jointStateCallback);
 
-    // Publishers
+
+    // PUBLISHERS
     
     // Joints torques
     ros::Publisher joint1_effort_pub = n.advertise<std_msgs::Float64>("/iiwa/iiwa_joint_1_effort_controller/command", 1);
@@ -103,7 +105,7 @@ int main(int argc, char **argv)
     ros::Publisher joint6_ddqd_pub = n.advertise<std_msgs::Float64>("/iiwa/joint6_desired_acceleration", 1);    
     ros::Publisher joint7_ddqd_pub = n.advertise<std_msgs::Float64>("/iiwa/joint7_desired_acceleration", 1);
 
-    // errors
+    //errors
     ros::Publisher joint1_err = n.advertise<std_msgs::Float64>("/iiwa/joint1_err", 1);
     ros::Publisher joint2_err = n.advertise<std_msgs::Float64>("/iiwa/joint2_err", 1);
     ros::Publisher joint3_err = n.advertise<std_msgs::Float64>("/iiwa/joint3_err", 1);
@@ -111,8 +113,10 @@ int main(int argc, char **argv)
     ros::Publisher joint5_err = n.advertise<std_msgs::Float64>("/iiwa/joint5_err", 1);
     ros::Publisher joint6_err = n.advertise<std_msgs::Float64>("/iiwa/joint6_err", 1);    
     ros::Publisher joint7_err = n.advertise<std_msgs::Float64>("/iiwa/joint7_err", 1);
-     //norm error
+
+    //norm error
     ros::Publisher norm_err = n.advertise<std_msgs::Float64>("/iiwa/norm_error", 1);
+
     // Services
     ros::ServiceClient robot_set_state_srv = n.serviceClient<gazebo_msgs::SetModelConfiguration>("/gazebo/set_model_configuration");
     ros::ServiceClient pauseGazebo = n.serviceClient<std_srvs::Empty>("/gazebo/pause_physics");
@@ -193,7 +197,7 @@ int main(int argc, char **argv)
     end_position << init_cart_pose.p.x(), -init_cart_pose.p.y(), init_cart_pose.p.z();
 
     // Plan trajectory
-    double traj_duration = 3, acc_duration = 0.7, t = 0.0, init_time_slot = 1.0, radius=0.1;
+    double traj_duration = 3, acc_duration = 0.7, t = 0.0, init_time_slot = 1.0, radius=0.08;
 
     // LINEAR TRAJECTORY CONSTRUCTOR
      //KDLPlanner planner(traj_duration, acc_duration, init_position, end_position); 
@@ -203,13 +207,12 @@ int main(int argc, char **argv)
     
     //GENERAL CONSTRUCTOR
     KDLPlanner planner(traj_duration, acc_duration, init_position, end_position,radius);
+
+
     // Retrieve the first trajectory point
-    std::string profile="trapezoidal";
+    std::string profile="cubic";
     std::string path="circular";
     trajectory_point p = planner.compute_trajectory(t,profile,path);
-
-    // Gains
-    double Kp = 120, Kd = 15;
 
     // Retrieve initial simulation time
     ros::Time begin = ros::Time::now();
@@ -263,7 +266,7 @@ int main(int argc, char **argv)
             // std::cout << "desired_pose: " << std::endl << des_pose << std::endl;
             // std::cout << "current_pose: " << std::endl << robot.getEEFrame() << std::endl;
 
-            // inverse kinematics
+            // INVERSE KINEMATICS
             qd.data << jnt_pos[0], jnt_pos[1], jnt_pos[2], jnt_pos[3], jnt_pos[4], jnt_pos[5], jnt_pos[6];
             qd = robot.getInvKin(qd, des_pose);
             dqd=robot.getInvKinVel(qd,des_cart_vel);
@@ -271,22 +274,27 @@ int main(int argc, char **argv)
         //     Eigen::Matrix<double,6,7> J = robot.getEEJacobian().data;
         //     Eigen::Matrix<double,6,7> Jdot = robot.getEEJacDotqDot().data;
         //     Eigen::Matrix<double,7,1> desacc=robot.getInvKinAcc(des_cart_acc,dqd,J,Jdot);
-        //    for(int i=0;i<7;i++){
-        //     ddqd.data[i]=desacc[i];
-        //    }
+        //    
+        //     for(int i=0;i<7;i++){
+        //       ddqd.data[i]=desacc[i];
+        //     }
+        //     robot.getInverseKinematics(des_pose, des_cart_vel, des_cart_acc,qd,dqd,ddqd);
 
-           // robot.getInverseKinematics(des_pose, des_cart_vel, des_cart_acc,qd,dqd,ddqd);
 
-            // joint space inverse dynamics control
-           tau = controller_.idCntr(qd, dqd, ddqd, Kp, Kd);
-            
-            // double Kp = 130;
-            // double Ko = 10;
-            // double Kdp = 25;
-            // // Cartesian space inverse dynamics control
-            // tau = controller_.idCntr(des_pose, des_cart_vel, des_cart_acc,
-            //                          Kp, Ko, Kdp, 2*sqrt(Ko));
+
+            //JOINT SPACE INVERSE DYNAMICS CONTROL
+            double Kp = 80, Kd = 15;
+            tau = controller_.idCntr(qd, dqd, ddqd, Kp, Kd);
+
+            //CARTESIAN SPACE INVERSE DYNAMICS CONTROL
+            //  double Kp = 50;
+            //  double Ko = 10;
+            //  double Kdp = 5;
+            // tau = controller_.idCntr(des_pose, des_cart_vel, des_cart_acc, Kp, Ko, Kdp, 2*sqrt(Ko));
+
+
             Eigen::VectorXd errors =qd.data-robot.getJntValues();
+
             // Set torques
             tau1_msg.data = tau[0];
             tau2_msg.data = tau[1];
