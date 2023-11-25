@@ -64,7 +64,7 @@ public:
    // Eigen::MatrixXd getJacobian();
     KDL::Jacobian getEEBodyJacobian();
     //Eigen::VectorXd getEEJacDotqDot();
-    KDL::Jacobian getEEJacDotqDot();
+    Eigen::VectorXd getEEJacDotqDot();
 
 
     void getInverseKinematics(KDL::Frame &f,

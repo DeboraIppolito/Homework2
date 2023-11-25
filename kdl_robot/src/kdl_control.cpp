@@ -88,12 +88,9 @@ Eigen::VectorXd KDLController::idCntr(KDL::Frame &_desPos,
    Eigen::VectorXd grad = gradientJointLimits(robot_->getJntValues(),robot_->getJntLimits(),cost);
 
 
-   //INVERSE DYNAMICS CONTROL
-    Eigen::Matrix<double,6,7> Jdot = robot_->getEEJacDotqDot().data;
-
     //matrice contenente y = xd_dot_dot - J_dot*q_dot + Kd*x_tilde_dot + Kp*x_tilde
     Eigen::Matrix<double,6,1> y;
-    y << dot_dot_x_d - Jdot*robot_->getJntVelocities() + Kd*dot_x_tilde + Kp*x_tilde;
+    y << dot_dot_x_d - robot_->getEEJacDotqDot() + Kd*dot_x_tilde + Kp*x_tilde;
 
     //restituiamo l'ingresso di controllo u = By + n
        return M * (Jpinv*y+ (I-Jpinv*J)*(/*- 10*grad */- 1*robot_->getJntVelocities()))+ robot_->getGravity() + robot_->getCoriolis();

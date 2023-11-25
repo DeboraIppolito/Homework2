@@ -287,10 +287,10 @@ int main(int argc, char **argv)
             tau = controller_.idCntr(qd, dqd, ddqd, Kp, Kd);
 
             //CARTESIAN SPACE INVERSE DYNAMICS CONTROL
-            //  double Kp = 50;
-            //  double Ko = 10;
-            //  double Kdp = 5;
-            // tau = controller_.idCntr(des_pose, des_cart_vel, des_cart_acc, Kp, Ko, Kdp, 2*sqrt(Ko));
+            //  double Kp = 100;
+            //  double Ko = 30;
+            //  double Kdp = 10;
+            //  tau = controller_.idCntr(des_pose, des_cart_vel, des_cart_acc, Kp, Ko, Kdp, 2*sqrt(Ko));
 
 
             Eigen::VectorXd errors =qd.data-robot.getJntValues();
