@@ -179,7 +179,6 @@ KDL::JntArray KDLRobot::getInvKin(const KDL::JntArray &q,
     return jntArray_out_;
 }
 
-
 //funzione che calcola l'inversione cinematica della velocita' (ricava q_dot a partire da v_e)
 KDL::JntArray KDLRobot::getInvKinVel(const KDL::JntArray &qd,
                         const KDL::Twist &eeFrameVel)
@@ -246,6 +245,11 @@ KDL::Jacobian KDLRobot::getEEBodyJacobian()
 Eigen::VectorXd KDLRobot::getEEJacDotqDot()
 {
     return s_J_dot_ee_.data*jntVel_.data;
+}
+
+Eigen::VectorXd KDLRobot::getEEJacDotqDot_red()
+{
+    return s_J_dot_ee_.data.topRows(3)*jntVel_.data;
 }
 
 void KDLRobot::addEE(const KDL::Frame &_f_F_ee)

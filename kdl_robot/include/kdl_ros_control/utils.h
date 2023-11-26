@@ -11,22 +11,26 @@ inline KDL::Vector toKDL(const Eigen::Vector3d& v){
     return KDL::Vector(v[0],v[1],v[2]);
 }
 
-inline KDL::Wrench toKDLWrench(const Eigen::Matrix<double,6,1>& w){
+inline KDL::Wrench toKDLWrench(const Eigen::Matrix<double,6,1>& w)
+{
     return KDL::Wrench(KDL::Vector(w[0], w[1], w[2]), KDL::Vector(w[3], w[4], w[5]));
 }
 
-inline KDL::Twist toKDLTwist(const Eigen::Matrix<double,6,1>& t){
+inline KDL::Twist toKDLTwist(const Eigen::Matrix<double,6,1>& t)
+{
     return KDL::Twist(KDL::Vector(t[0], t[1], t[2]), KDL::Vector(t[3], t[4], t[5]));
 }
 
-inline KDL::Frame toKDL(const std::vector<double>& v){
+inline KDL::Frame toKDL(const std::vector<double>& v)
+{
     return KDL::Frame(KDL::Rot(KDL::Vector(v.at(3),0,0))*
                       KDL::Rot(KDL::Vector(0,v.at(4),0))*
                       KDL::Rot(KDL::Vector(0,0,v.at(5))),
                       KDL::Vector(v.at(0),v.at(1),v.at(2)));
 }
 
-inline Eigen::MatrixXd toEigen(const std::vector<Eigen::Matrix<double,3,7>>& J){
+inline Eigen::MatrixXd toEigen(const std::vector<Eigen::Matrix<double,3,7>>& J)
+{
     Eigen::Matrix<double,12,7> Ja;
     for (int i = 0; i < J.size(); i ++)
     {
@@ -35,42 +39,49 @@ inline Eigen::MatrixXd toEigen(const std::vector<Eigen::Matrix<double,3,7>>& J){
     return Ja;
 }
 
-inline Eigen::Vector3d toEigen(const KDL::Vector& v){
+inline Eigen::Vector3d toEigen(const KDL::Vector& v)
+{
     return Eigen::Vector3d(v.x(),v.y(),v.z());
 }
 
-inline Eigen::Matrix3d toEigen(const KDL::Rotation& M){
+inline Eigen::Matrix3d toEigen(const KDL::Rotation& M)
+{
     Eigen::Matrix3d E;
     for (unsigned int i = 0; i < 9; ++i)
         E(i/3, i%3) = M.data[i];
     return E;
 }
 
-inline Eigen::Matrix<double,6,1> toEigen(const KDL::Wrench& w){
+inline Eigen::Matrix<double,6,1> toEigen(const KDL::Wrench& w)
+{
     Eigen::Matrix<double,6,1> e;
     e << toEigen(w.force), toEigen(w.torque);
     return e;
 }
 
-inline Eigen::Matrix<double,6,1> toEigen(const KDL::Twist& t){
+inline Eigen::Matrix<double,6,1> toEigen(const KDL::Twist& t)
+{
     Eigen::Matrix<double,6,1> e;
     e << toEigen(t.vel), toEigen(t.rot);
     return e;
 }
 
 // JacobainKDLToEigen
-inline Eigen::Matrix<double,6,Eigen::Dynamic> toEigen(const KDL::Jacobian &J){
+inline Eigen::Matrix<double,6,Eigen::Dynamic> toEigen(const KDL::Jacobian &J)
+{
     return J.data;
 }
 
-inline std::vector<double> toStdVector(const Eigen::VectorXd& V){
+inline std::vector<double> toStdVector(const Eigen::VectorXd& V)
+{
     std::vector<double> v;
     v.resize(V.size());
     Eigen::VectorXd::Map(&v[0], V.size()) = V;
     return v;
 }
 
-inline Eigen::Matrix<double,6,6> spatialRotation(const KDL::Rotation& M){
+inline Eigen::Matrix<double,6,6> spatialRotation(const KDL::Rotation& M)
+{
     Eigen::Matrix<double,6,6> R = Eigen::Matrix<double,6,6>::Identity();
     R.block(0,0,3,3) = toEigen(M);
     R.block(3,3,3,3) = toEigen(M);
@@ -78,7 +89,8 @@ inline Eigen::Matrix<double,6,6> spatialRotation(const KDL::Rotation& M){
     return R;
 }
 
-inline Eigen::Matrix3d skew(const Eigen::Vector3d & t){
+inline Eigen::Matrix3d skew(const Eigen::Vector3d & t)
+{
     Eigen::Matrix3d t_hat;
 
     t_hat <<     0, -t[2],  t[1],
@@ -88,7 +100,8 @@ inline Eigen::Matrix3d skew(const Eigen::Vector3d & t){
     return t_hat;
 }
 
-inline KDL::Jacobian adjoint(const KDL::Frame & F, const KDL::Jacobian &_J){
+inline KDL::Jacobian adjoint(const KDL::Frame & F, const KDL::Jacobian &_J)
+{
     Eigen::Matrix<double,6,6> ad;
     ad.setZero();
     ad.block(0,0,3,3) = toEigen(F.M);
@@ -106,7 +119,8 @@ inline KDL::Jacobian adjoint(const KDL::Frame & F, const KDL::Jacobian &_J){
 }
 
 
-inline KDL::Twist adjoint(const KDL::Frame & F, const KDL::Twist &T){
+inline KDL::Twist adjoint(const KDL::Frame & F, const KDL::Twist &T)
+{
     Eigen::Matrix<double,6,6> ad;
     ad.setZero();
 
@@ -126,7 +140,8 @@ inline KDL::Twist adjoint(const KDL::Frame & F, const KDL::Twist &T){
 }
 
 
-inline Eigen::Matrix<double,6,6> adjoint(const Eigen::Vector3d & p, const Eigen::Matrix3d & R){
+inline Eigen::Matrix<double,6,6> adjoint(const Eigen::Vector3d & p, const Eigen::Matrix3d & R)
+{
     Eigen::Matrix<double,6,6> ad;
     ad.setZero();
 
@@ -159,8 +174,6 @@ pseudoinverse(const MatT &mat, typename MatT::Scalar tolerance = typename MatT::
     return svd.matrixV() * singularValuesInv * svd.matrixU().adjoint();
 }
 
-
-
 inline Eigen::Matrix<double,3,1> computeOrientationError(const Eigen::Matrix<double,3,3> &_R_d, 
                                                          const Eigen::Matrix<double,3,3> &_R_e)
 {
@@ -183,8 +196,8 @@ inline Eigen::Matrix<double,3,1> computeOrientationError(const Eigen::Matrix<dou
 // FUNZIONI IMPLEMENTATE DA NOI
 
 // funzione che a partire dalla matrice di rotazione ricava gli angoli di Eulero ZYZ
-inline Eigen::Matrix<double,3,1> computeEulerAngles(const Eigen::Matrix<double,3,3> &_R){
-
+inline Eigen::Matrix<double,3,1> computeEulerAngles(const Eigen::Matrix<double,3,3> &_R)
+{
     Eigen::Matrix<double,3,1> euler;
     double r13=_R(0,2);
     double r23=_R(1,2);
@@ -203,9 +216,10 @@ inline Eigen::Matrix<double,3,1> computeEulerAngles(const Eigen::Matrix<double,3
     return euler; 
 }
 
-//funzione che calcola l'errore di orientamento con gli angoli di Eulero
+
 inline Eigen::Matrix<double,3,1> computeOrientationErrorEuler(const Eigen::Matrix<double,3,3> &_R_d, 
-                                                         const Eigen::Matrix<double,3,3> &_R_e){
+                                                         const Eigen::Matrix<double,3,3> &_R_e)
+{
     Eigen::Matrix<double,3,1> e_phi;
 
     //desidered angles
@@ -217,35 +231,34 @@ inline Eigen::Matrix<double,3,1> computeOrientationErrorEuler(const Eigen::Matri
     return e_phi; 
 }
 
-//funzione che calcola la matrice di trasformazione T tra joint space e operational space
+
 inline Eigen::Matrix<double,3,3> T_matrix(const Eigen::Matrix<double,3,1> &euler){
-double phi=euler(0,0);
- double theta=euler(1,0);
-  Eigen::Matrix<double,3,3> T;
+    double phi=euler(0,0);
+    double theta=euler(1,0);
+    Eigen::Matrix<double,3,3> T;
 
   /* {0, -sin(phi),cos(phi)*sin(theta)},
      {0, cos(phi),sin(phi)*sin(theta)},
      {1,0, cos(theta)}  */
 
- T(0,0) = 0;
- T(0,1) = -sin(phi);
- T(0,2) = cos(phi)*sin(theta);
- T(1,0) = 0;
- T(1,1) = cos(phi);
- T(1,2) = sin(phi)*sin(theta);
- T(2,0)= 1;
- T(2,1)= 0;
- T(2,2)= cos(theta);
+    T(0,0) = 0;
+    T(0,1) = -sin(phi);
+    T(0,2) = cos(phi)*sin(theta);
+    T(1,0) = 0;
+    T(1,1) = cos(phi);
+    T(1,2) = sin(phi)*sin(theta);
+    T(2,0)= 1;
+    T(2,1)= 0;
+    T(2,2)= cos(theta);
+
     return T;
 }
 
-//funzione che calcola lo Jacobiano analitico
 inline  Eigen::Matrix<double,6,7> AnalitycalJacobian( const Eigen::Matrix<double,6,7> &J,const Eigen::Matrix<double,3,1> &euler){
 
-    Eigen::Matrix<double,6,6> TA;
+    Eigen::Matrix<double,6,6> TA=Eigen::MatrixXd::Zero(6,6);
     TA.block(0,0,3,3) = Eigen::Matrix3d::Identity();
     TA.block(3,3,3,3) = T_matrix(euler);
-
     return TA.inverse()*J;
 }
 
@@ -255,7 +268,6 @@ inline Eigen::Matrix<double,3,1> computeLinearError(const Eigen::Matrix<double,3
 {
     return _p_d - _p_e;
 }
-
 
 inline Eigen::Matrix<double,3,1> computeOrientationVelocityError(const Eigen::Matrix<double,3,1> &_omega_d,
                                                                  const Eigen::Matrix<double,3,1> &_omega_e,
@@ -268,21 +280,20 @@ inline Eigen::Matrix<double,3,1> computeOrientationVelocityError(const Eigen::Ma
     return L.inverse()*(L.transpose()*_omega_d - L*_omega_e);
 }
 
-
 inline Eigen::Matrix<double,3,1> computeOrientationVelocityErrorEuler(const Eigen::Matrix<double,3,1> &_omega_d,
                                                                  const Eigen::Matrix<double,3,1> &_omega_e,
                                                                  const Eigen::Matrix<double,3,3> &_R_d,
                                                                  const Eigen::Matrix<double,3,3> &_R_e)
 {
-    //desidered angles
-    Eigen::Matrix<double,3,1> phi_d=computeEulerAngles(_R_d);
-    //effective angles
-    Eigen::Matrix<double,3,1> phi_e=computeEulerAngles(_R_e);
-    Eigen::Matrix<double,3,3> Te=T_matrix(phi_e);
-    Eigen::Matrix<double,3,3> Td=T_matrix(phi_d);
-    Eigen::Matrix<double,3,1> dphi_d=Td.inverse()*_omega_d;
-    Eigen::Matrix<double,3,1> dphi_e=Te.inverse()*_omega_e;
-    return dphi_d-dphi_e;
+//desidered angles
+Eigen::Matrix<double,3,1> phi_d=computeEulerAngles(_R_d);
+//effective angles
+Eigen::Matrix<double,3,1> phi_e=computeEulerAngles(_R_e);
+Eigen::Matrix<double,3,3> Te=T_matrix(phi_e);
+Eigen::Matrix<double,3,3> Td=T_matrix(phi_d);
+Eigen::Matrix<double,3,1> dphi_d=Td.inverse()*_omega_d;
+Eigen::Matrix<double,3,1> dphi_e=Te.inverse()*_omega_e;
+return dphi_d-dphi_e;
 }
 
 
@@ -293,6 +304,10 @@ inline void computeErrors(const KDL::Frame &_Fd,
                           Eigen::Matrix<double,6,1> &e,
                           Eigen::Matrix<double,6,1> &edot)
 {
+//    std::cout << toEigen(_Fd.p) << std::endl;
+//    std::cout << toEigen(_Fe.p) << std::endl;
+//    std::cout << toEigen(_Fd.M) << std::endl;
+//    std::cout << toEigen(_Fe.M) << std::endl;
 
     Eigen::Matrix<double,3,3,Eigen::RowMajor> R_d(_Fd.M.data);
     Eigen::Matrix<double,3,3,Eigen::RowMajor> R_e(_Fe.M.data);
@@ -300,12 +315,11 @@ inline void computeErrors(const KDL::Frame &_Fd,
     edot << computeLinearError(toEigen(_Vd.vel), toEigen(_Ve.vel)), -toEigen(_Ve.rot);//computeOrientationVelocityError(toEigen(_Vd.rot), toEigen(_Ve.rot), R_d, R_e);
 }
 
-
 inline Eigen::MatrixXd weightedPseudoInverse(const Eigen::MatrixXd &W,
-                                             const Eigen::MatrixXd &Mat){
+                                             const Eigen::MatrixXd &Mat)
+{
     return W.inverse()*Mat.transpose()*(Mat*W.inverse()*Mat.transpose()).inverse();
 }
-
 
 inline Eigen::MatrixXd gradientJointLimits(const Eigen::VectorXd &q, const Eigen::MatrixXd &jntLimits, double &costValue)
 {

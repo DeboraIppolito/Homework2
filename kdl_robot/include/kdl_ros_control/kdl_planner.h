@@ -40,7 +40,7 @@ public:
 
     KDL::Trajectory* getTrajectory();
 
-    // LINEAR TRAJECTORY CONSTRUCTOR
+    //////////////////////////////////
     KDLPlanner(double _trajDuration, double _accDuration,
                Eigen::Vector3d _trajInit, Eigen::Vector3d _trajEnd);
 
@@ -79,7 +79,7 @@ private:
     Eigen::Vector3d trajInit_, trajEnd_;
     trajectory_point p;
 
-    // variabile che contiene il raggio della traiettoria circolare
+    // nuova variabile che contiene il raggio della traiettoria circolare
     double trajRadius_;
 
 
